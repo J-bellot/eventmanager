@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Event manager{% endblock %}
+
+{% block body %}
+    
+    {% if filterForm is defined %}
+        <h1>Liste des événements</h1>
+        <div class="row my-3">
+            <div class="col">
+                {{ form_start(filterForm) }}
+                {{ form_widget(filterForm.startDate, {'attr': {'class': 'form-control', 'placeholder': 'Date de début'}}) }}
+            </div>
+            <div class="col">
+                {{ form_widget(filterForm.endDate, {'attr': {'class': 'form-control', 'placeholder': 'Date de fin'}}) }}
+            </div>
+            <div class="col">
+                {{ form_widget(filterForm.filter, {'attr': {'class': 'btn btn-primary'}}) }}
+            </div>
+            <div class="col">
+                {{ form_end(filterForm) }}
+            </div>
+        </div>
+    {% else %}
+        <h1>Mes inscriptions</h1>
+    {% endif %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th>Titre</th>
+                    {% if myevents is defined and myevents == true %}
+                        <th>Modifier</th>
+                        <th>Supprimer</th>
+                    {% else %}
+                        <th>Inscription</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td>{{ event.beginAt|date('d-m-Y à H:i') }}</td>
+                        <td>{{ event.endAt|date('d-m-Y à H:i') }}</td>
+                        <td>{{ event.title }}</td>
+                        {% if myevents is defined and myevents == true %}
+                            <td>
+                                <a href="/edit-event/{{ event.id }}" class="btn btn-info">
+                                    Modifier
+                                </a>
+                            </td>
+                            <td>
+                                <a href="/delete-event/{{ event.id }}" class="btn btn-danger">
+                                    Supprimer
+                                </a>
+                            </td>
+                        {% else %}
+                            <td>
+                            {% set isUserRegistered = app.user and event.eventAttendees.contains(app.user) %}
+                            {% if app.user %}
+                                {% for attendee in event.eventAttendees %}
+                                    {% if attendee.user[0] == app.user %}
+                                        {% set isUserRegistered = true %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            {% if isUserRegistered %}
+                                <a href="{{ path('unregister_for_event', {'event_id': event.id}) }}" class="btn btn-danger">
+                                    Se désinscrire
+                                </a>
+                            {% else %}
+                                <a href="{{ path('register_for_event', {'event_id': event.id}) }}" class="btn btn-primary {% if not app.user %}
+                                    disabled
+                                {% endif %}" >
+                                    S'inscrire
+                                </a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
